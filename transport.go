@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-kit/kit/endpoint"
+	"github.com/ricardocampos/goauth/oauth2"
 )
 
 // the request should be x-www-form-urlencoded
@@ -53,11 +54,11 @@ func decodeTokenRequest(_ context.Context, r *http.Request) (interface{}, error)
 		request.clientSecret = password
 	} else {
 		// we use form value
-		request.clientID = r.PostFormValue(ClientID)
-		request.clientSecret = r.PostFormValue(ClientSecret)
+		request.clientID = r.PostFormValue(oauth2.ClientID)
+		request.clientSecret = r.PostFormValue(oauth2.ClientSecret)
 	}
-	request.grantType = r.PostFormValue(GrantType)
-	request.scope = r.PostFormValue(Scope)
+	request.grantType = r.PostFormValue(oauth2.GrantType)
+	request.scope = r.PostFormValue(oauth2.Scope)
 	return request, nil
 }
 

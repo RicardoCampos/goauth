@@ -1,4 +1,4 @@
-package oauth2client
+package oauth2
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 
 func TestNewShouldNotAllowEmptyClientID(t *testing.T) {
 	// Act
-	c, err := New("", "bar", 0, []string{"read", "write"})
+	c, err := NewClient("", "bar", ReferenceTokenType, 0, []string{"read", "write"})
 
 	// Assert
 
@@ -18,7 +18,7 @@ func TestNewShouldNotAllowEmptyClientID(t *testing.T) {
 
 func TestNewShouldNotAllowEmptyClientSecret(t *testing.T) {
 	// Act
-	c, err := New("foo", "", 0, []string{"read", "write"})
+	c, err := NewClient("foo", "", ReferenceTokenType, 0, []string{"read", "write"})
 
 	// Assert
 
@@ -26,9 +26,40 @@ func TestNewShouldNotAllowEmptyClientSecret(t *testing.T) {
 	assert.NotNil(t, err, "Should return an error response")
 }
 
+func TestNewShouldAllowBearerTokenTypes(t *testing.T) {
+	// Act
+	c, err := NewClient("foo", "bar", BearerTokenType, 0, []string{"read", "write"})
+
+	// Assert
+
+	assert.NotNil(t, c, "Should return a client")
+	assert.Nil(t, err, "Should not return an error response")
+}
+
+func TestNewShouldAllowReferenceTokenTypes(t *testing.T) {
+	// Act
+	c, err := NewClient("foo", "bar", ReferenceTokenType, 0, []string{"read", "write"})
+
+	// Assert
+
+	assert.NotNil(t, c, "Should return a client")
+	assert.Nil(t, err, "Should not return an error response")
+}
+
+func TestNewShouldNotAllowInvalidTokenTypes(t *testing.T) {
+	// Act
+	c, err := NewClient("foo", "bar", "blarg", 0, []string{"read", "write"})
+
+	// Assert
+
+	assert.Nil(t, c, "Should not return a client")
+	assert.NotNil(t, err, "Should return an error response")
+	assert.Equal(t, ErrInvalidTokenType, err)
+}
+
 func TestNewShouldNotAllowEmptyAllowedScopes(t *testing.T) {
 	// Act
-	c, err := New("foo", "bar", 0, []string{})
+	c, err := NewClient("foo", "bar", ReferenceTokenType, 0, []string{})
 
 	// Assert
 
@@ -37,7 +68,7 @@ func TestNewShouldNotAllowEmptyAllowedScopes(t *testing.T) {
 }
 func TestNewShouldNotAllowLifetimeLessThanMinimum(t *testing.T) {
 	// Act
-	c, err := New("foo", "bar", MinimumAccesTokenLifetimeInMs-1, []string{"read", "write"})
+	c, err := NewClient("foo", "bar", ReferenceTokenType, MinimumAccesTokenLifetimeInS-1, []string{"read", "write"})
 
 	// Assert
 
@@ -47,7 +78,7 @@ func TestNewShouldNotAllowLifetimeLessThanMinimum(t *testing.T) {
 
 func TestValidateScopesCatchesInvalidRequest(t *testing.T) {
 	// Arrange
-	c, _ := New("foo", "bar", 0, []string{"read", "write"})
+	c, _ := NewClient("foo", "bar", ReferenceTokenType, 0, []string{"read", "write"})
 
 	// Act
 	ok, err := c.ValidateScopes([]string{"delete"})
@@ -59,7 +90,7 @@ func TestValidateScopesCatchesInvalidRequest(t *testing.T) {
 
 func TestValidateScopesAllowsValidRequest(t *testing.T) {
 	// Arrange
-	c, _ := New("foo", "bar", 0, []string{"read", "write"})
+	c, _ := NewClient("foo", "bar", ReferenceTokenType, 0, []string{"read", "write"})
 
 	// Act
 	ok, err := c.ValidateScopes([]string{"write"})

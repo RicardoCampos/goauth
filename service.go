@@ -1,12 +1,14 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"time"
+	"strings"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
+	"github.com/ricardocampos/goauth/oauth2"
 )
 
 // OAuth2Service has a token endpoint you can send client credentials to in exchange for a wonderful JWT (or... string)
@@ -14,48 +16,89 @@ type OAuth2Service interface {
 	Token(tokenRequest) (tokenResponse, error)
 }
 
-type oAuth2Service struct{}
+type oAuth2Service struct {
+	clientRepository oauth2.ClientRepository
+	tokenRepository  oauth2.ReferenceTokenRepository
+}
 
 type tokenPayload struct {
 	Issuer string `json:"iss"`
 	Scope  string `json:"scope"`
 }
 
-func (oAuth2Service) Token(s tokenRequest) (tokenResponse, error) {
-	if s.grantType == "" || s.grantType != ClientCredentialsGrantType {
+func (svc oAuth2Service) Token(s tokenRequest) (tokenResponse, error) {
+	if svc.clientRepository == nil {
 		return tokenResponse{
-			Err: "You have provided an invalid grant_type in your token request."}, ErrInvalidGrant
+			Err: "Cannot validate clients."}, oauth2.ErrInvalidGrant
+	}
+	if svc.tokenRepository == nil {
+		return tokenResponse{
+			Err: "Cannot store tokens."}, oauth2.ErrInvalidGrant
+	}
+	if s.grantType == "" || s.grantType != oauth2.ClientCredentialsGrantType {
+		return tokenResponse{
+			Err: "You have provided an invalid grant_type in your token request."}, oauth2.ErrInvalidGrant
 	}
 	if s.scope == "" {
 		return tokenResponse{
-			Err: "Invalid scope in token request."}, ErrInvalidScope
+			Err: "Invalid scope in token request."}, oauth2.ErrInvalidScope
 	}
-	// TODO: this actually needs to authorise the client. If the username/password matches then we should check to see if it has that scope.
-	// This way an invalid client could be detected.
-	// This will also allow us to validate the scopes, and the bearer type.
-	// We should also have the token lifetime from the client.
-	// TODO: With reference tokens we only issue a UUID in the AccessToken field and we store the actual token in the data store.
+	if s.clientID == "" {
+		return tokenResponse{
+			Err: "You have provided an invalid grant in your token request."}, oauth2.ErrInvalidGrant
+	}
+	if s.clientSecret == "" {
+		return tokenResponse{
+			Err: "You have provided an invalid grant in your token request."}, oauth2.ErrInvalidGrant
+	}
 
-	tokenValidTimeSpanMs := int64(300000) // 5 minutes
-	nbfEpochTimeMs := time.Now().UnixNano() / 1000000
-	expiry := nbfEpochTimeMs + tokenValidTimeSpanMs
-	jti := uuid.New().String() // this is the reference UUID we would return for ref tokens.
+	// VALIDATE THE CLIENT
+
+	client, ok := svc.clientRepository.GetClient(s.clientID)
+	if client == nil || !ok {
+		return tokenResponse{}, oauth2.ErrInvalidGrant
+	}
+	if client.ClientSecret() != s.clientSecret {
+		return tokenResponse{}, oauth2.ErrInvalidGrant
+	}
+
+	validated, validationErr := client.ValidateScopes(strings.Fields(s.scope))
+	if validationErr != nil || !validated {
+		return tokenResponse{}, oauth2.ErrInvalidScope
+	}
+
+	nbfEpochTimeMs := oauth2.GetNowInEpochTime()
+	expiry := nbfEpochTimeMs + client.AccessTokenLifetime()
+	jti := uuid.New().String()
 
 	claims := jwt.StandardClaims{
-		Audience:  "youlot", // Really, this is optional, but will come from the client struct
+		Audience:  "youlot", // TODO: Really, this is optional, but will come from the client struct
 		ExpiresAt: expiry,
 		Id:        jti,
-		IssuedAt:  1544214970,
-		Issuer:    "goauth.xom",   // This is a constant and should be the URI of the issuing server.
+		IssuedAt:  nbfEpochTimeMs,
+		Issuer:    "goauth.xom",   // TODO: This is a constant and should be the URI of the issuing server.
 		NotBefore: nbfEpochTimeMs, // this should be the current time
 	}
-	accessToken, _ := signToken(claims)
 
-	// tokenType must be retrieved from the client's details.
+	clientTokenType := client.TokenType()
+	accessToken := string(jti)
+	token, _ := signToken(claims)
+	if clientTokenType == oauth2.ReferenceTokenType {
+		referenceToken, err := oauth2.NewReferenceToken(accessToken, client.ClientID(), expiry, token)
+		if err != nil {
+			return tokenResponse{}, oauth2.ErrInvalidGrant
+		}
+		addTokenError := svc.tokenRepository.AddToken(referenceToken)
+		if addTokenError != nil {
+			return tokenResponse{}, errors.New("unable to save token")
+		}
+	} else if clientTokenType == oauth2.BearerTokenType {
+		accessToken = token
+	}
 	return tokenResponse{
 		AccessToken: accessToken,
-		TokenType:   BearerTokenType,
-		ExpiresIn:   expiry,
+		TokenType:   clientTokenType,
+		ExpiresIn:   client.AccessTokenLifetime(),
 		Scope:       s.scope,
 	}, nil
 }

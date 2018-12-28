@@ -1,57 +1,68 @@
-See https://tools.ietf.org/html/rfc6749
+# GoAuth Server
 
-TODO:
+This is an implementation of an [OAuth2 Server](https://tools.ietf.org/html/rfc6749) in [Golang](https://golang.org) using [Go-kit](https://gokit.io/). It's a bit of a pet project, not intended for production (on your own head be it).
 
-- Tighten signing of JWT
-  - Validate Client secret & client Id
-  - Validate Client scopes
-  - Use client data to store the expiry time
-- pass in the location of the .pem key files
-- write script to generate .pem (openssl) - with password
-- use jwt/ParseRSAPrivateKeyFromPEMWithPassword
-- Add JWKS endpoint (to support Bearer tokens)
-- Add verification endpoint that supports multiple certs (to enable rollover)
+Currently it integrates with PostgreSQL, and will require PostgreSQL to be running on your local machine for the unit tests to run.
 
-- create dockerfile for build
+## Contributing
 
-- refactor into /cmd, /pkg etc
+No contributions are being accepted at this point. It's really just a pet project to learn Golang!
 
-- Add repository for clients/client credentials, scopes. Back with postgres?
-- Locally cache clients in memory.
-  - Have cache reload mechanism to auto pull client details. Could we have a hash in the DB to detect this?
-  - Have some kind of push mechanism? OR is this simply not required if reload is efficient enough to check often(e.g. every 10 seconds).
-- Add in functionality for reference tokens (poss use other cache?)
+## Developing, building and installing
 
-- Add OpenTracing
-- Add etcd/consul for config
+Building/installing it:-
 
-Running it:-
+```bash
+$ go install
+```
+
+Running it (as long as you have $GOPATH set):-
 
 ```bash
 $ goauth
 ```
 
-Run the unit tests:-
-`go test`
+Run the unit tests:
+`go test ./...`
 
-To look at the (frankly shocking) coverage:-
+To look at the (frankly shocking) coverage:
 
-`go test -cover`
+`go test ./... -cover`
 
-To get some HTML foe the shockingly low level of coverage:-
-`go test -cover -coverprofile=c.out && go tool cover -html=c.out -o coverage.html && open coverage.html`
+To get some HTML for the shockingly low level of coverage:
+`go test ./... -cover -coverprofile=c.out && go tool cover -html=c.out -o coverage.html && open coverage.html`
 
-To test manually:-
+To test manually:
+
+```bash
 curl -X POST \
   http://localhost:8080/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'Authorization: Basic bXlBd2Vzb21lQ2xpZW50OnN1cGVyc2VjcmV0cGFzc3dvcmQ=' \
+  -H 'Authorization: Basic Zm9vOnNlY3JldA==' \
   -H 'cache-control: no-cache' \
   -d 'grant_type=client_credentials&scope=read'
+```
 
   Packages used:-
+```bash
   go get github.com/stretchr/testify
   go get github.com/go-kit
   go get github.com/prometheus/client_golang
   go get github.com/dgrijalva/jwt-go
   go get github.com/google/uuid
+  go get github.com/lib/pq
+```
+
+# Integrating with PostgreSQL
+
+Run Postgres itself:-
+
+`./scripts/runPostgres.sh`
+
+Connect to it using psql or similar and run contents of
+
+`./scripts/createPostgresDb.sql`
+
+Use this connection string:
+
+`postgres://postgres:password@localhost/goauth`

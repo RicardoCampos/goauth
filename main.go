@@ -11,6 +11,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+func useSql() bool {
+	use := os.Getenv("USE_SQL")
+	if len(use) < 1 || use == "false" {
+		return false
+	}
+	return true
+}
+
 func main() {
 	logger := log.NewLogfmtLogger(os.Stderr)
 
@@ -35,7 +43,11 @@ func main() {
 	}, []string{}) // no fields here
 
 	var svc OAuth2Service
-	svc = oAuth2Service{}
+	if !useSql() {
+		svc = NewInMemoryOAuth2Service()
+	} else {
+		panic("not implemented")
+	}
 	svc = loggingMiddleware{logger, svc}
 	svc = instrumentingMiddleware{requestCount, requestLatency, countResult, svc}
 
