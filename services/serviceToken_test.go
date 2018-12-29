@@ -1,15 +1,30 @@
-package main
+package services
 
 import (
+	"crypto/rsa"
+	"io/ioutil"
 	"testing"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ricardocampos/goauth/oauth2"
 	"github.com/stretchr/testify/assert"
 )
 
+func loadTestKey() *rsa.PrivateKey {
+	k, err := ioutil.ReadFile("test_key")
+	if err != nil {
+		panic(err)
+	}
+	key, err := jwt.ParseRSAPrivateKeyFromPEM(k)
+	if err != nil {
+		panic(err)
+	}
+	return key
+}
+
 func TestTokenChecksClientID(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service()
+	svc := NewInMemoryOAuth2Service(loadTestKey())
 	request := tokenRequest{
 		clientID:     "",
 		clientSecret: "secret",
@@ -24,11 +39,12 @@ func TestTokenChecksClientID(t *testing.T) {
 	assert.Empty(t, token.AccessToken, "We should not be provided with a token.")
 	assert.NotNil(t, err, "We should have an error returned if we do not provide a known client.")
 	assert.Equal(t, oauth2.ErrInvalidGrant, err)
+	assert.Equal(t, oauth2.ErrInvalidGrant, token.Err)
 }
 
 func TestTokenChecksClientSecret(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service()
+	svc := NewInMemoryOAuth2Service(loadTestKey())
 	request := tokenRequest{
 		clientID:     "foo",
 		clientSecret: "wrongpassword",
@@ -43,12 +59,13 @@ func TestTokenChecksClientSecret(t *testing.T) {
 	assert.Empty(t, token.AccessToken, "We should not be provided with a token.")
 	assert.NotNil(t, err, "We should have an error returned if we provide an incorrect secret.")
 	assert.Equal(t, oauth2.ErrInvalidGrant, err)
+	assert.Equal(t, oauth2.ErrInvalidGrant, token.Err)
 
 }
 
 func TestTokenChecksClientScopes(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service()
+	svc := NewInMemoryOAuth2Service(loadTestKey())
 	request := tokenRequest{
 		clientID:     "foo",
 		clientSecret: "secret",
@@ -63,6 +80,7 @@ func TestTokenChecksClientScopes(t *testing.T) {
 	assert.Empty(t, token.AccessToken, "We should not be provided with a token.")
 	assert.NotNil(t, err, "We should have an error returned if we ask for a scope we are not allowed.")
 	assert.Equal(t, oauth2.ErrInvalidScope, err)
+	assert.Equal(t, oauth2.ErrInvalidScope, token.Err)
 }
 
 func TestTokenWillNotWorkIfRepositoryNotInitialised(t *testing.T) {
@@ -81,13 +99,14 @@ func TestTokenWillNotWorkIfRepositoryNotInitialised(t *testing.T) {
 	// Assert
 	assert.NotNil(t, err, "We should not have an error returned.")
 	assert.NotNil(t, token, "token should not be null.")
-	assert.Equal(t, "Cannot validate clients.", token.Err)
-	assert.Equal(t, err, oauth2.ErrInvalidGrant)
+	assert.Equal(t, "Cannot validate clients.", token.ErrMsg)
+	assert.Equal(t, oauth2.ErrInvalidGrant, err)
+	assert.Equal(t, oauth2.ErrInvalidGrant, token.Err)
 }
 
 func TestTokenWillNotErrorWhenAllInputIsOk(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service()
+	svc := NewInMemoryOAuth2Service(loadTestKey())
 	request := tokenRequest{
 		clientID:     "foo",
 		clientSecret: "secret",
@@ -105,7 +124,7 @@ func TestTokenWillNotErrorWhenAllInputIsOk(t *testing.T) {
 
 func TestTokenRequiresScope(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service()
+	svc := NewInMemoryOAuth2Service(loadTestKey())
 	request := tokenRequest{
 		clientID:     "foo",
 		clientSecret: "secret",
@@ -119,11 +138,12 @@ func TestTokenRequiresScope(t *testing.T) {
 	assert.Empty(t, token.AccessToken, "We should not be provided with a token.")
 	assert.NotNil(t, err, "We should have an error returned if we do not ask for a scope.")
 	assert.Equal(t, oauth2.ErrInvalidScope, err)
+	assert.Equal(t, oauth2.ErrInvalidScope, token.Err)
 }
 
 func TestTokenRejectsInvalidGrant(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service()
+	svc := NewInMemoryOAuth2Service(loadTestKey())
 	request := tokenRequest{
 		clientID:     "foo",
 		clientSecret: "secret",
@@ -138,11 +158,12 @@ func TestTokenRejectsInvalidGrant(t *testing.T) {
 	assert.Empty(t, token.AccessToken, "We should not be provided with a token.")
 	assert.NotNil(t, err, "We should have an error returned if we ask for a grant type we do not support.")
 	assert.Equal(t, oauth2.ErrInvalidGrant, err)
+	assert.Equal(t, oauth2.ErrInvalidGrant, token.Err)
 }
 
 func TestTokenRejectsEmptyGrant(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service()
+	svc := NewInMemoryOAuth2Service(loadTestKey())
 	request := tokenRequest{
 		clientID:     "foo",
 		clientSecret: "secret",
@@ -157,4 +178,5 @@ func TestTokenRejectsEmptyGrant(t *testing.T) {
 	assert.Empty(t, token.AccessToken, "We should not be provided with a token.")
 	assert.NotNil(t, err, "We should have an error returned if we ask for an empty grant type.")
 	assert.Equal(t, oauth2.ErrInvalidGrant, err)
+	assert.Equal(t, oauth2.ErrInvalidGrant, token.Err)
 }

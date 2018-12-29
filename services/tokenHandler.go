@@ -1,4 +1,4 @@
-package main
+package services
 
 import (
 	"context"
@@ -6,8 +6,18 @@ import (
 	"net/http"
 
 	"github.com/go-kit/kit/endpoint"
+	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/ricardocampos/goauth/oauth2"
 )
+
+// NewTokenHandler creates a token endpoint handler
+func NewTokenHandler(svc OAuth2Service) *httptransport.Server {
+	return httptransport.NewServer(
+		makeTokenEndpoint(svc),
+		decodeTokenRequest,
+		encodeTokenResponse,
+	)
+}
 
 // the request should be x-www-form-urlencoded
 // it MUST include grant_type
@@ -22,11 +32,12 @@ type tokenRequest struct {
 
 // In reality we will want to respond with a JWT. ugh.
 type tokenResponse struct {
-	AccessToken string `json:"access_token"`
-	TokenType   string `json:"token_type"`
-	ExpiresIn   int64  `json:"expires_in"`
-	Scope       string `json:"scope"`
-	Err         string `json:"err,omitempty"` // errors don't JSON-marshal, so we use a string
+	AccessToken string `json:"access_token,v"`
+	TokenType   string `json:"token_type,omitempty"`
+	ExpiresIn   int64  `json:"expires_in,omitempty"`
+	Scope       string `json:"scope,omitempty"`
+	ErrMsg      string `json:"errMsg,omitempty"` // errors don't JSON-marshal, so we use a string
+	Err         error  `json:"-"`                // actual raw error, always omitted
 }
 
 func makeTokenEndpoint(svc OAuth2Service) endpoint.Endpoint {
@@ -62,6 +73,13 @@ func decodeTokenRequest(_ context.Context, r *http.Request) (interface{}, error)
 	return request, nil
 }
 
-func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+func encodeTokenResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	token := response.(tokenResponse)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if token.Err != nil {
+		w.WriteHeader(errorToHTTPCode(token.Err))
+		var temp struct{}
+		return json.NewEncoder(w).Encode(temp)
+	}
 	return json.NewEncoder(w).Encode(response)
 }

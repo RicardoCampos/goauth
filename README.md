@@ -51,6 +51,7 @@ curl -X POST \
   go get github.com/dgrijalva/jwt-go
   go get github.com/google/uuid
   go get github.com/lib/pq
+  github.com/VividCortex/gohistogram // this is needed for testing :(
 ```
 
 # Integrating with PostgreSQL
@@ -66,3 +67,9 @@ Connect to it using psql or similar and run contents of
 Use this connection string:
 
 `postgres://postgres:password@localhost/goauth`
+
+## Endpoints
+
+- `/token` : to retrieve either a bearer or reference token dependent on client. 200 if OK, 401 if unauthorized, 500 for anything else.
+- `/validate` : used to validate a reference token, returns 200 if it's OK, or 400 if invalid.
+- `/metrics`: Prometheus metrics endpoints. Full of goodness.

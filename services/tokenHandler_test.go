@@ -1,4 +1,4 @@
-package main
+package services
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ func TestDecodeTokenRequestWithCredentialsInHeader(t *testing.T) {
 	data := url.Values{}
 	data.Set(oauth2.GrantType, oauth2.ClientCredentialsGrantType)
 	data.Set(oauth2.Scope, "read")
-	httpRequest, err := http.NewRequest("POST", "/connect/token", strings.NewReader(data.Encode()))
+	httpRequest, err := http.NewRequest("POST", "/token", strings.NewReader(data.Encode()))
 	if err != nil {
 		t.Fatal(err)
 	}
