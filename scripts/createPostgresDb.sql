@@ -40,3 +40,22 @@ ALTER TABLE public.clients
     OWNER to postgres;
 COMMENT ON TABLE public.clients
     IS 'clientSecret should be encrypted by your application.';
+
+
+CREATE TABLE public.tokens
+(
+    "tokenID" uuid NOT NULL,
+    "clientID" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    expiry bigint NOT NULL,
+    "accessToken" text COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT tokens_pkey PRIMARY KEY ("tokenID")
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE public.tokens
+    OWNER to postgres;
+COMMENT ON TABLE public.tokens
+    IS 'Store the JWT tokens behind the reference tokens';

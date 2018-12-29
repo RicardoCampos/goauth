@@ -30,7 +30,7 @@ func (r inMemoryReferenceTokenRepository) GetToken(tokenID string) (oauth2.Refer
 	if ok {
 		return v, true, nil
 	}
-	return nil, false, nil
+	return nil, false, errors.New("could not find token")
 }
 
 // NewInMemoryReferenceTokenRepository returns an inMemoryReferenceTokenRepository
