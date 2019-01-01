@@ -90,15 +90,20 @@ func (svc oAuth2Service) Token(s tokenRequest) (tokenResponse, error) {
 		ExpiresAt: expiry,
 		Id:        jti,
 		IssuedAt:  nbfEpochTimeMs,
-		Issuer:    "goauth.xom",   // TODO: This is a constant and should be the URI of the issuing server.
-		NotBefore: nbfEpochTimeMs, // this should be the current time
+		Issuer:    "goauth.xom",      // TODO: This is a constant and should be the URI of the issuing server.
+		NotBefore: nbfEpochTimeMs,    // this should be the current time
+		Subject:   client.ClientID(), // Slightly off-piste here. We are not an authentication server so using the sub claim to identify the client.
 	}
 
 	clientTokenType := client.TokenType()
-	accessToken := string(jti)
-	token, _ := signToken(claims, svc.rsaKey)
+	token, err := signToken(claims, svc.rsaKey)
+
+	if err != nil {
+		return tokenResponse{}, oauth2.ErrInvalidGrant
+	}
+
 	if clientTokenType == oauth2.ReferenceTokenType {
-		referenceToken, err := oauth2.NewReferenceToken(accessToken, client.ClientID(), expiry, token)
+		referenceToken, err := oauth2.NewReferenceToken(jti, client.ClientID(), expiry, token)
 		if err != nil {
 			return tokenResponse{
 				Err: oauth2.ErrInvalidGrant,
@@ -110,15 +115,23 @@ func (svc oAuth2Service) Token(s tokenRequest) (tokenResponse, error) {
 				Err: oauth2.ErrInvalidGrant,
 			}, errors.New("unable to save token")
 		}
+		return tokenResponse{
+			AccessToken: jti,
+			TokenType:   clientTokenType,
+			ExpiresIn:   client.AccessTokenLifetime(),
+			Scope:       s.scope,
+		}, nil
+
 	} else if clientTokenType == oauth2.BearerTokenType {
-		accessToken = token
+
+		return tokenResponse{
+			AccessToken: token,
+			TokenType:   clientTokenType,
+			ExpiresIn:   client.AccessTokenLifetime(),
+			Scope:       s.scope,
+		}, nil
 	}
-	return tokenResponse{
-		AccessToken: accessToken,
-		TokenType:   clientTokenType,
-		ExpiresIn:   client.AccessTokenLifetime(),
-		Scope:       s.scope,
-	}, nil
+	return tokenResponse{}, oauth2.ErrInvalidTokenType
 }
 
 func (svc oAuth2Service) Validate(r validationRequest) (validationResponse, error) {
@@ -141,6 +154,8 @@ func (svc oAuth2Service) Validate(r validationRequest) (validationResponse, erro
 		}, ErrInvalidToken
 	}
 	if token != nil {
+		// Now we validate the token
+
 		return validationResponse{}, nil
 	}
 	return validationResponse{

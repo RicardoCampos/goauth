@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -50,7 +49,6 @@ func TestDecodeTokenRequestWithCredentialsInBody(t *testing.T) {
 
 	// Act
 	result, err := decodeTokenRequest(nil, httpRequest)
-	fmt.Println(result)
 
 	// Assert
 	assert.Nil(t, err, "We should not have an error returned.")

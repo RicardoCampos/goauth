@@ -43,10 +43,6 @@ func NewReferenceToken(tokenID string, clientID string, expiry int64, accessToke
 	if len(clientID) < 1 {
 		return nil, errors.New("clientID is required")
 	}
-	now := GetNowInEpochTime()
-	if expiry < now {
-		return nil, errors.New("expiry time set to the past")
-	}
 	if len(accessToken) < 1 {
 		return nil, errors.New("accessToken is required")
 	}
