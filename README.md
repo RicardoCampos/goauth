@@ -54,19 +54,26 @@ curl -X POST \
   github.com/VividCortex/gohistogram // this is needed for testing :(
 ```
 
-# Integrating with PostgreSQL
+# Running in Docker
 
-Run Postgres itself:-
+There is a `Dockerfile` to run the server locally with in-memory settings. There is also a `docker-compose.yml` file for running the server with a local PostgreSQL instance, which is handy for tests. All you need to do is run this in the main directory:-
 
-`./scripts/runPostgres.sh`
+`docker-compose up`
 
-Connect to it using psql or similar and run contents of
+You should have th server accessible on port 8080.
 
-`./scripts/createPostgresDb.sql`
+# Integrating with PostgreSQL Locally
+
+Run PostgreSQL using Docker:-
+
+`./runLocalPostgres.sh`
 
 Use this connection string:
 
 `postgres://postgres:password@localhost/goauth`
+
+If you don't want to usethat script (it deletes all data each time), then look in the `scripts/` folder for more information on how to set up a local instance.
+
 
 ## Endpoints
 

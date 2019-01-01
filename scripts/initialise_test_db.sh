@@ -1,6 +1,7 @@
--- Database: goauth
+#!/bin/bash
+set -e
 
--- DROP DATABASE goauth;
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "postgres" <<-EOSQL
 
 CREATE DATABASE goauth
     WITH 
@@ -13,10 +14,10 @@ CREATE DATABASE goauth
 
 COMMENT ON DATABASE goauth
     IS 'Has all tables required for goauth OAuth2 server';
+EOSQL
 
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "goauth" <<-EOSQL
 CREATE TYPE tokenType AS ENUM ('Reference','Bearer');
-
--- Table: public.clients
 
 CREATE TABLE public.clients
 (
@@ -37,6 +38,12 @@ ALTER TABLE public.clients
 COMMENT ON TABLE public.clients
     IS 'clientSecret should be encrypted by your application.';
 
+INSERT INTO public.clients(
+	"clientId", "clientSecret", "tokenType", "accessTokenLifetime", "allowedScopes")
+	VALUES ('foo_bearer', 'secret', 'Bearer', 0, 'read write');
+INSERT INTO public.clients(
+	"clientId", "clientSecret", "tokenType", "accessTokenLifetime", "allowedScopes")
+	VALUES ('foo_reference', 'secret', 'Reference', 0, 'read write');
 
 CREATE TABLE public.tokens
 (
@@ -55,3 +62,4 @@ ALTER TABLE public.tokens
     OWNER to postgres;
 COMMENT ON TABLE public.tokens
     IS 'Store the JWT tokens behind the reference tokens';
+EOSQL

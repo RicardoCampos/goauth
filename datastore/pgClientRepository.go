@@ -2,21 +2,21 @@ package datastore
 
 import (
 	"database/sql"
-	"fmt"
-	"log"
 	"strings"
 
+	"github.com/go-kit/kit/log"
 	// we mask the actual driver for now
 	_ "github.com/lib/pq"
 	"github.com/ricardocampos/goauth/oauth2"
 )
 
 type pgClientRepository struct {
-	db *sql.DB
+	db     *sql.DB
+	logger log.Logger
 }
 
 //NewPostgresClientRepository creates a new repository backed by Postgres
-func NewPostgresClientRepository(dataSourceName string) (oauth2.ClientRepository, error) {
+func NewPostgresClientRepository(dataSourceName string, logger log.Logger) (oauth2.ClientRepository, error) {
 	db, err := sql.Open("postgres", dataSourceName)
 	if err != nil {
 		return nil, err
@@ -26,6 +26,7 @@ func NewPostgresClientRepository(dataSourceName string) (oauth2.ClientRepository
 	}
 	repository := pgClientRepository{
 		db,
+		logger,
 	}
 	return repository, nil
 }
@@ -35,17 +36,13 @@ func (r pgClientRepository) AddClient(client oauth2.Client) {
 	db := r.db
 	stmt, err := db.Prepare("INSERT INTO public.clients(\"clientId\", \"clientSecret\", \"accessTokenLifetime\", \"tokenType\", \"allowedScopes\" ) VALUES($1,$2,$3,$4,$5)")
 	if err != nil {
-		log.Fatal(err)
+		r.logger.Log("msg", "Unable to prepare client insert statement", err)
+		return
 	}
-	res, err := stmt.Exec(client.ClientID(), client.ClientSecret(), client.AccessTokenLifetime(), client.TokenType(), strings.Join(client.AllowedScopes(), " "))
-	if err != nil {
-		log.Fatal(err)
+	_, er := stmt.Exec(client.ClientID(), client.ClientSecret(), client.AccessTokenLifetime(), client.TokenType(), strings.Join(client.AllowedScopes(), " "))
+	if er != nil {
+		r.logger.Log("msg", "Unable to execute client insert statement", err)
 	}
-	rowCnt, err := res.RowsAffected()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("affected = %d\n", rowCnt)
 }
 
 // GetClients gets an in memory array of clients
@@ -55,7 +52,7 @@ func (r pgClientRepository) GetClients() map[string]oauth2.Client {
 	defer stmt.Close()
 	rows, err := stmt.Query()
 	if err != nil {
-		log.Fatal(err)
+		r.logger.Log("msg", "Unable to prepare client get statement", err)
 		return nil
 	}
 	defer rows.Close()
@@ -70,16 +67,16 @@ func (r pgClientRepository) GetClients() map[string]oauth2.Client {
 		)
 		err := rows.Scan(&dbClientID, &clientSecret, &accessTokenLifetime, &tokenType, &allowedScopes)
 		if err != nil {
-			log.Fatal(err)
+			r.logger.Log("msg", "Unable to scan client get statement", err)
 		}
 		client, err := oauth2.NewClient(dbClientID, clientSecret, tokenType, accessTokenLifetime, strings.Fields(allowedScopes))
 		if err != nil {
-			log.Fatal(err)
+			r.logger.Log("msg", "Unable to create client from rows", err)
 		}
 		clients[dbClientID] = client
 	}
 	if err = rows.Err(); err != nil {
-		log.Fatal(err)
+		r.logger.Log("msg", "Unknown error getting clients", err)
 	}
 	return clients
 }
@@ -97,17 +94,18 @@ func (r pgClientRepository) GetClient(clientID string) (oauth2.Client, bool) {
 	stmt, err := db.Prepare("SELECT \"clientId\", \"clientSecret\", \"accessTokenLifetime\", \"tokenType\", \"allowedScopes\" FROM public.clients WHERE \"clientId\" = $1 LIMIT 1;")
 
 	if err != nil {
-		log.Fatal(err)
+		r.logger.Log("msg", "Could not compile the client query.", err)
 		return nil, false
 	}
 	defer stmt.Close()
 	err = stmt.QueryRow(clientID).Scan(&dbClientID, &clientSecret, &accessTokenLifetime, &tokenType, &allowedScopes)
 	if err != nil {
-		log.Fatal(err)
+		r.logger.Log("msg", "Unable to find a matching client.", err)
+		return nil, false
 	}
 	client, err := oauth2.NewClient(dbClientID, clientSecret, tokenType, accessTokenLifetime, strings.Fields(allowedScopes))
 	if err != nil {
-		log.Fatal(err)
+		r.logger.Log("msg", "Failed to create a client from the row retrieved", err)
 		return nil, false
 	}
 	return client, true

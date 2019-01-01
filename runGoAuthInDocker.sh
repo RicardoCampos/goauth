@@ -1,0 +1,1 @@
+docker run -it -e CONNECTION_STRING=postgres://postgres:password@host.docker.internal/goauth?sslmode=disable -p8080:8080 --rm --name goauth_server goauth

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/go-kit/kit/log"
 	"github.com/google/uuid"
 	"github.com/ricardocampos/goauth/oauth2"
 )
@@ -20,6 +21,7 @@ type oAuth2Service struct {
 	clientRepository oauth2.ClientRepository
 	tokenRepository  oauth2.ReferenceTokenRepository
 	rsaKey           *rsa.PrivateKey
+	logger           log.Logger
 }
 
 func (svc oAuth2Service) Token(s tokenRequest) (tokenResponse, error) {

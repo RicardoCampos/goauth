@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/go-kit/kit/log"
 	"github.com/google/uuid"
 	"github.com/ricardocampos/goauth/oauth2"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +26,7 @@ func loadTestPublicKey() *rsa.PublicKey {
 
 func TestValidateReturnsNoErrorsOnSuccess(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service(loadTestKey())
+	svc := NewInMemoryOAuth2Service(log.NewNopLogger(), loadTestKey())
 	tokenRequest := tokenRequest{
 		clientID:     "foo_reference",
 		clientSecret: "secret",
@@ -51,7 +52,7 @@ func TestValidateReturnsNoErrorsOnSuccess(t *testing.T) {
 
 func TestValidateReturnsErrorsOnFailure(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service(loadTestKey())
+	svc := NewInMemoryOAuth2Service(log.NewNopLogger(), loadTestKey())
 
 	// Act
 

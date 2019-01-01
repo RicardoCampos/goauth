@@ -12,8 +12,8 @@ import (
 	"github.com/ricardocampos/goauth/services"
 )
 
-func useSql() bool {
-	use := os.Getenv("USE_SQL")
+func useDB() bool {
+	use := os.Getenv("CONNECTION_STRING")
 	if len(use) < 1 || use == "false" {
 		return false
 	}
@@ -36,10 +36,10 @@ func main() {
 	logger := log.NewLogfmtLogger(os.Stderr)
 	rsaKey := loadRsaKey()
 	var svc services.OAuth2Service
-	if !useSql() {
-		svc = services.NewInMemoryOAuth2Service(rsaKey)
+	if !useDB() {
+		svc = services.NewInMemoryOAuth2Service(logger, rsaKey)
 	} else {
-		panic("not implemented")
+		svc = services.NewPostgresOAuth2Service(logger, os.Getenv("CONNECTION_STRING"), rsaKey)
 	}
 
 	// Wrap services in middleware for middlware goodness.

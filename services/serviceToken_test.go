@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/go-kit/kit/log"
 	"github.com/ricardocampos/goauth/oauth2"
 	"github.com/stretchr/testify/assert"
 )
@@ -24,7 +25,7 @@ func loadTestKey() *rsa.PrivateKey {
 
 func TestTokenChecksClientID(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service(loadTestKey())
+	svc := NewInMemoryOAuth2Service(log.NewNopLogger(), loadTestKey())
 	request := tokenRequest{
 		clientID:     "",
 		clientSecret: "secret",
@@ -44,7 +45,7 @@ func TestTokenChecksClientID(t *testing.T) {
 
 func TestTokenChecksClientSecret(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service(loadTestKey())
+	svc := NewInMemoryOAuth2Service(log.NewNopLogger(), loadTestKey())
 	request := tokenRequest{
 		clientID:     "foo",
 		clientSecret: "wrongpassword",
@@ -65,7 +66,7 @@ func TestTokenChecksClientSecret(t *testing.T) {
 
 func TestTokenChecksClientScopes(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service(loadTestKey())
+	svc := NewInMemoryOAuth2Service(log.NewNopLogger(), loadTestKey())
 	request := tokenRequest{
 		clientID:     "foo",
 		clientSecret: "secret",
@@ -106,7 +107,7 @@ func TestTokenWillNotWorkIfRepositoryNotInitialised(t *testing.T) {
 
 func TestTokenWillNotErrorWhenAllInputIsOk(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service(loadTestKey())
+	svc := NewInMemoryOAuth2Service(log.NewNopLogger(), loadTestKey())
 	request := tokenRequest{
 		clientID:     "foo",
 		clientSecret: "secret",
@@ -124,7 +125,7 @@ func TestTokenWillNotErrorWhenAllInputIsOk(t *testing.T) {
 
 func TestTokenRequiresScope(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service(loadTestKey())
+	svc := NewInMemoryOAuth2Service(log.NewNopLogger(), loadTestKey())
 	request := tokenRequest{
 		clientID:     "foo",
 		clientSecret: "secret",
@@ -143,7 +144,7 @@ func TestTokenRequiresScope(t *testing.T) {
 
 func TestTokenRejectsInvalidGrant(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service(loadTestKey())
+	svc := NewInMemoryOAuth2Service(log.NewNopLogger(), loadTestKey())
 	request := tokenRequest{
 		clientID:     "foo",
 		clientSecret: "secret",
@@ -163,7 +164,7 @@ func TestTokenRejectsInvalidGrant(t *testing.T) {
 
 func TestTokenRejectsEmptyGrant(t *testing.T) {
 	// Arrange
-	svc := NewInMemoryOAuth2Service(loadTestKey())
+	svc := NewInMemoryOAuth2Service(log.NewNopLogger(), loadTestKey())
 	request := tokenRequest{
 		clientID:     "foo",
 		clientSecret: "secret",
