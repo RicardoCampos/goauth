@@ -36,12 +36,12 @@ func NewValidateHandler(svc OAuth2Service) *httptransport.Server {
 
 func makeValidateEndpoint(svc OAuth2Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
-		req := request.(tokenRequest)
-		token, err := svc.Token(req)
+		req := request.(validationRequest)
+		result, err := svc.Validate(req)
 		if err != nil {
-			return token, nil
+			return result, nil
 		}
-		return token, nil
+		return result, nil
 	}
 }
 

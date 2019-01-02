@@ -1,0 +1,24 @@
+{
+  "name": "tests",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha '**/*-spec.js' --timeout 10000"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "jsonwebtoken": "^8.4.0",
+    "mocha": "^5.2.0",
+    "node-fetch": "^2.3.0",
+    "r2": "^2.0.1",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.5",
+    "superagent": "^4.1.0",
+    "uuid": "^3.3.2",
+    "uuid-validate": "0.0.3"
+  }
+}

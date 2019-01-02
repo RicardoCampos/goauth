@@ -144,12 +144,7 @@ func (svc oAuth2Service) Validate(r validationRequest) (validationResponse, erro
 			Err:    err,
 		}, err
 	}
-	token, ok, err := svc.tokenRepository.GetToken(r.tokenID)
-	if err != nil {
-		return validationResponse{
-			Err: err,
-		}, err
-	}
+	token, ok, _ := svc.tokenRepository.GetToken(r.tokenID)
 	if !ok {
 		return validationResponse{
 			Err: ErrInvalidToken,

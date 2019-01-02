@@ -31,6 +31,20 @@
             "program": "${file}",
             "env": {},
             "args": []
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Mocha Current File",
+            "program": "${workspaceFolder}/tests/node_modules/mocha/bin/_mocha",
+            "args": [
+                "--timeout",
+                "999999",
+                "--colors",
+                "${file}"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
         }
     ]
 }
