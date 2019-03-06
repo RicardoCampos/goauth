@@ -1,12 +1,12 @@
-FROM golang:1.11-alpine AS builder
+FROM golang:1.12-alpine3.9 AS builder
 
 RUN apk update && apk add --no-cache git ca-certificates tzdata && update-ca-certificates
 WORKDIR /go/src/github.com/ricardocampos/goauth
 COPY . .
 
-RUN go get -d -v ./...
+# RUN go get -d -v ./...
 # Build the binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags="-w -s" -o /go/bin/goauth
+RUN GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags="-w -s" -o /go/bin/goauth
 
 FROM scratch
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo

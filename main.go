@@ -7,8 +7,10 @@ import (
 	"os"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/go-kit/kit/log"
+	"github.com/sirupsen/logrus"
+	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/ricardocampos/goauth/handlers"
 	"github.com/ricardocampos/goauth/services"
 )
 
@@ -20,7 +22,7 @@ func useDB() bool {
 	return true
 }
 
-func loadRsaKey() *rsa.PrivateKey {
+func loadPrivateRsaKey() *rsa.PrivateKey {
 	k, err := ioutil.ReadFile("sample_key")
 	if err != nil {
 		panic(err)
@@ -32,26 +34,41 @@ func loadRsaKey() *rsa.PrivateKey {
 	return key
 }
 
-func main() {
-	logger := log.NewLogfmtLogger(os.Stderr)
-	rsaKey := loadRsaKey()
-	var svc services.OAuth2Service
-	if !useDB() {
-		svc = services.NewInMemoryOAuth2Service(logger, rsaKey)
-	} else {
-		svc = services.NewPostgresOAuth2Service(logger, os.Getenv("CONNECTION_STRING"), rsaKey)
+func loadPublicRsaKey() *rsa.PublicKey {
+	k, err := ioutil.ReadFile("sample_key.pub")
+	if err != nil {
+		panic(err)
 	}
-
-	// Wrap services in middleware for middlware goodness.
-	svc = services.NewLoggingMiddleware(logger, svc)
-	svc = services.NewInstrumentingMiddleware(svc)
-
-	tokenHandler := services.NewTokenHandler(svc)
-	validateHandler := services.NewValidateHandler(svc)
-
-	http.Handle("/token", tokenHandler)
-	http.Handle("/validate", validateHandler)
-	http.Handle("/metrics", promhttp.Handler())
-	logger.Log("msg", "HTTP", "addr", ":8080")
-	logger.Log("err", http.ListenAndServe(":8080", nil))
+	key, err := jwt.ParseRSAPublicKeyFromPEM(k)
+	if err != nil {
+		panic(err)
+	}
+	return key
 }
+
+
+func main() {
+	r := mux.NewRouter()
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.Level = logrus.TraceLevel
+	logger.Out = os.Stdout
+	rsaPrivateKey := loadPrivateRsaKey()
+	rsaPublicKey := loadPublicRsaKey()
+	var svc services.TokenService
+	if !useDB() {
+		svc = services.NewInMemoryTokenService(logger, rsaPrivateKey, rsaPublicKey)
+	} else {
+		svc = services.NewPostgresTokenService(logger, os.Getenv("CONNECTION_STRING"), rsaPrivateKey, rsaPublicKey)
+	}
+	tokenHandler := handlers.NewTokenHandler(logger, svc)
+	validateHandler := handlers.NewValidateHandler(logger, svc)
+	r.HandleFunc("/token", tokenHandler.HandleToken)
+	r.HandleFunc("/validate", validateHandler.HandleValidation)
+	r.Handle("/metrics", promhttp.Handler())
+	http.Handle("/", r)
+	logger.Info("msg", "HTTP", "addr", ":8080")
+	logger.Info("err", http.ListenAndServe(":8080", nil))
+}
+
+

@@ -3,14 +3,14 @@ package datastore
 import (
 	"testing"
 
-	"github.com/go-kit/kit/log"
 	"github.com/google/uuid"
 	"github.com/ricardocampos/goauth/oauth2"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
 func getRepository() oauth2.ClientRepository {
-	db, _ := NewPostgresClientRepository("postgres://postgres:password@localhost/goauth?sslmode=disable", log.NewNopLogger())
+	db, _ := NewPostgresClientRepository("postgres://postgres:password@localhost/goauth?sslmode=disable", log.New())
 	return db
 }
 func TestPgRepositoryGetClient(t *testing.T) {

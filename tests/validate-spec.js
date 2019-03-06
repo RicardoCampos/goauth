@@ -20,6 +20,7 @@ describe('The /validate endpoint',  () => {
             const result = JSON.parse(response.text);
             request.post(endpoint + '/validate')
               .send(`token=${result.access_token}`)
+              .send(`expectedScope=read`)
               .end((err, response) => {
                 expect(err).to.be.null;
                 expect(response.status).to.equal(200);
@@ -27,12 +28,58 @@ describe('The /validate endpoint',  () => {
               });  
         });        
     });
-    it('with an invalid reference token will return a 400 response',  (done) => {
+    it('with a valid reference token with insufficient_scope (see https://tools.ietf.org/html/rfc6750#section-3.1) returns a 403 response',  (done) => {
+      request.post(endpoint + '/token')
+        .auth('foo_reference', 'secret')
+        .send('grant_type=client_credentials')
+        .send('scope=read')
+        .end((err, response) => {
+            expect(err).to.be.null;
+            expect(response.status).to.equal(200);
+            const result = JSON.parse(response.text);
+            request.post(endpoint + '/validate')
+              .send(`token=${result.access_token}`)
+              .send('expectedScope=notthescopeIaskedfor')
+              .end((err, response) => {
+                //expect(err).to.be.null;
+                expect(response.status).to.equal(403);
+                done();
+              });  
+        });        
+    });
+    it('with a token but no expectedScope will return a 400 response',  (done) => {
+      request.post(endpoint + '/validate')
+        .send(`token=notarealtoken`)
+        .end((response) => {
+            expect(response.status).to.equal(400);
+            done();
+        });        
+    });
+    it('with no token will return a 400 response',  (done) => {
+      request.post(endpoint + '/validate')
+        .send('expectedScope=read')
+        .end((response) => {
+            expect(response.status).to.equal(400);
+            done();
+        });        
+    });
+    it('with a reference token that has no access token behind it will return a 401 response',  (done) => {
         request.post(endpoint + '/validate')
           .send(`token=notarealtoken`)
+          .send('expectedScope=read')
           .end((response) => {
-              expect(response.status).to.equal(400); 
+              expect(response.status).to.equal(401); 
               done();
           });        
       });
+      it('with a reference token that has expired it will return a 401 response',  (done) => {
+        request.post(endpoint + '/validate')
+          .send(`token=expiredtoken`)
+          .send('expectedScope=read')
+          .end((response) => {
+              expect(response.status).to.equal(401); 
+              done();
+          });        
+      });
+    // TODO: we need to have an expired token
 });

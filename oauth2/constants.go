@@ -13,6 +13,15 @@ var ErrInvalidScope = errors.New("Invalid Scope Type")
 // ErrInvalidTokenType returned when the input value for token is wrong
 var ErrInvalidTokenType = errors.New("Invalid Token Type")
 
+// ErrInvalidRequest Invalid input
+var ErrInvalidRequest = errors.New("Invalid Request")
+
+// ErrInvalidToken Token not found or invalid
+var ErrInvalidToken = errors.New("not found or expired")
+
+// ErrInsufficientScope returned when a token hasn't got the scope that has been requested
+var ErrInsufficientScope = errors.New("insufficient_scope")
+
 // Return value constants
 
 // BearerTokenType will return the full JWT in an AccessToken field.

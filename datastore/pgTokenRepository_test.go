@@ -3,14 +3,14 @@ package datastore
 import (
 	"testing"
 
-	"github.com/go-kit/kit/log"
 	"github.com/google/uuid"
 	"github.com/ricardocampos/goauth/oauth2"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
 func getPostgresTokenRepository() oauth2.ReferenceTokenRepository {
-	repository, _ := NewPostgresTokenRepository("postgres://postgres:password@localhost/goauth?sslmode=disable", log.NewNopLogger())
+	repository, _ := NewPostgresTokenRepository("postgres://postgres:password@localhost/goauth?sslmode=disable", log.New())
 	return repository
 }
 
