@@ -58,4 +58,16 @@ describe('The /token endpoint with a bearer token client',  () => {
           done();
       });        
   });
+  it('will return the correct cache headers',  (done) => {
+    request.post(endpoint)
+      .auth('foo_bearer', 'secret')
+      .send('grant_type=client_credentials')
+      .send('scope=read')
+      .end((err, response) => {
+          expect(err).to.be.null;
+          expect(response.headers['cache-control']).to.equal('no-store');
+          expect(response.headers['pragma']).to.equal('no-cache');
+          done();
+      });        
+  });
 });
