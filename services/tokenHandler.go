@@ -76,6 +76,8 @@ func decodeTokenRequest(_ context.Context, r *http.Request) (interface{}, error)
 func encodeTokenResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	token := response.(tokenResponse)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Pragma", "no-cache")
 	if token.Err != nil {
 		w.WriteHeader(errorToHTTPCode(token.Err))
 		var temp struct{}

@@ -2,6 +2,7 @@ package services
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
@@ -57,4 +58,19 @@ func TestDecodeTokenRequestWithCredentialsInBody(t *testing.T) {
 	assert.Equal(t, "read", result.(tokenRequest).scope, "It should extract scopes correctly.")
 	assert.Equal(t, "myAwesomeClient", result.(tokenRequest).clientID, "It should extract clientID correctly.")
 	assert.Equal(t, "supersecretpassword", result.(tokenRequest).clientSecret, "It should extract clientSecret correctly.")
+}
+
+func TestEncodeTokenResponse(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	// create a token request object
+	response := tokenResponse{
+		AccessToken: "abc",
+		TokenType:   "reference",
+		ExpiresIn:   10000,
+		Scope:       "none",
+	}
+	encodeTokenResponse(nil, recorder, response)
+	result := recorder.Result()
+	assert.Equal(t, "no-store", result.Header["Cache-Control"][0])
+	assert.Equal(t, "no-cache", result.Header["Pragma"][0])
 }
