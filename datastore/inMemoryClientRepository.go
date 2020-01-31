@@ -1,6 +1,6 @@
 package datastore
 
-import "github.com/ricardocampos/goauth/oauth2"
+import "github.com/RicardoCampos/goauth/oauth2"
 
 // InMemoryClientRepository is a hard coded, in-memory only placeholder
 type inMemoryClientRepository struct {

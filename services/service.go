@@ -8,7 +8,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-kit/kit/log"
 	"github.com/google/uuid"
-	"github.com/ricardocampos/goauth/oauth2"
+	"github.com/RicardoCampos/goauth/oauth2"
 )
 
 // OAuth2Service has a token endpoint you can send client credentials to in exchange for a wonderful JWT (or... string)

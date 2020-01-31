@@ -3,7 +3,7 @@ package datastore
 import (
 	"errors"
 
-	"github.com/ricardocampos/goauth/oauth2"
+	"github.com/RicardoCampos/goauth/oauth2"
 )
 
 type inMemoryReferenceTokenRepository struct {

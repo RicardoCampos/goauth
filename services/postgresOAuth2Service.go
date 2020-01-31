@@ -4,7 +4,7 @@ import (
 	"crypto/rsa"
 
 	"github.com/go-kit/kit/log"
-	"github.com/ricardocampos/goauth/datastore"
+	"github.com/RicardoCampos/goauth/datastore"
 )
 
 // NewPostgresOAuth2Service creates an OAuth2Service that does all the things in memory

@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
-	"github.com/ricardocampos/goauth/oauth2"
+	"github.com/RicardoCampos/goauth/oauth2"
 )
 
 // NewTokenHandler creates a token endpoint handler

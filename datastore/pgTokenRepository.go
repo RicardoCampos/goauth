@@ -7,7 +7,7 @@ import (
 	"github.com/go-kit/kit/log"
 	// we mask the actual driver for now
 	_ "github.com/lib/pq"
-	"github.com/ricardocampos/goauth/oauth2"
+	"github.com/RicardoCampos/goauth/oauth2"
 )
 
 type pgTokenRepository struct {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/google/uuid"
-	"github.com/ricardocampos/goauth/oauth2"
+	"github.com/RicardoCampos/goauth/oauth2"
 	"github.com/stretchr/testify/assert"
 )
 

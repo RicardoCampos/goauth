@@ -9,7 +9,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-kit/kit/log"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/ricardocampos/goauth/services"
+	"github.com/RicardoCampos/goauth/services"
 )
 
 func useDB() bool {

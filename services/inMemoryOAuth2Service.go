@@ -4,8 +4,8 @@ import (
 	"crypto/rsa"
 
 	"github.com/go-kit/kit/log"
-	"github.com/ricardocampos/goauth/datastore"
-	"github.com/ricardocampos/goauth/oauth2"
+	"github.com/RicardoCampos/goauth/datastore"
+	"github.com/RicardoCampos/goauth/oauth2"
 )
 
 // NewInMemoryOAuth2Service creates an OAuth2Service that does all the things in memory
